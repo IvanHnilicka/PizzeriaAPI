@@ -10,6 +10,7 @@ namespace API_Pizzeria.Controllers
 {
     [Route("productos")]
     [ApiController]
+    [Authorize]
     public class ProductoController : Controller
     {
         private readonly DataContext _dataContext;
@@ -23,7 +24,6 @@ namespace API_Pizzeria.Controllers
 
 
         // Retorna la lista de productos
-        [Authorize]
         [HttpGet]
         public async Task<ActionResult<List<Producto>>> GetProductos() 
         {

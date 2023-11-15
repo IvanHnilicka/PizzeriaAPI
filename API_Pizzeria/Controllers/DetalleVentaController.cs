@@ -2,6 +2,7 @@
 using API_Pizzeria.DTOs;
 using API_Pizzeria.Models;
 using AutoMapper;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -9,6 +10,7 @@ namespace API_Pizzeria.Controllers
 {
     [Route("detalleVenta")]
     [ApiController]
+    [Authorize]
     public class DetalleVentaController : Controller
     {
         private readonly DataContext _dataContext;
@@ -34,14 +36,16 @@ namespace API_Pizzeria.Controllers
         }
 
 
-        // Agrega un detalle a la ultima venta registrada
+        // Crea el detalle de venta de la ultima venta creada
         [HttpPost]
         public async Task<ActionResult> crearDetalleVenta(NuevoDetalleVentaDTO detalleVenta)
         {
             DetalleVenta detalleMap = _mapper.Map<DetalleVenta>(detalleVenta);
+            Venta venta = await _dataContext.Ventas.OrderBy(v => v.Id).LastAsync();
+            
+            detalleMap.VentaId = venta.Id;
             detalleMap.ProductoId = detalleVenta.IdProducto;
-            detalleMap.VentaId = _dataContext.Ventas.OrderBy(v => v.Id).Last().Id;
-
+            
             _dataContext.Add(detalleMap);
             await _dataContext.SaveChangesAsync();
             return Ok(detalleMap);

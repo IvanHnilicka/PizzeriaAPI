@@ -2,6 +2,7 @@
 using API_Pizzeria.DTOs;
 using API_Pizzeria.Models;
 using AutoMapper;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -9,6 +10,7 @@ namespace API_Pizzeria.Controllers
 {
     [Route("ventas")]
     [ApiController]
+    [Authorize]
     public class VentaController : Controller
     {
         private readonly DataContext _dataContext;
@@ -41,7 +43,7 @@ namespace API_Pizzeria.Controllers
 
         // Obtiene la lista de ventas por el numero de mes
         [HttpGet("mes/{mes:int}")]
-        public async Task<ActionResult<List<Venta>>> getVentasMes(int mes)
+        public async Task<ActionResult<List<Venta>>> GetVentasMes(int mes)
         {
             var ventas = await _dataContext.Ventas.Where(v => v.Fecha.Month == mes).ToListAsync();
             return Ok(ventas);
@@ -50,12 +52,12 @@ namespace API_Pizzeria.Controllers
 
         // Crea una nueva venta
         [HttpPost("{numEmpleado:int}")]
-        public async Task<ActionResult> crearVenta(int numEmpleado)
+        public async Task<ActionResult> CrearVenta(int numEmpleado)
         {
             Empleado empleado = await _dataContext.Empleados.Where(e => e.NumEmpleado == numEmpleado).FirstAsync();
-            DateTime fecha = DateTime.Now;
+            DateTime fecha = new();
 
-            if(empleado == null)
+            if (empleado == null)
             {
                 return BadRequest("Numero de empleado no encontrado");
             }
@@ -70,6 +72,29 @@ namespace API_Pizzeria.Controllers
             _dataContext.Add(venta);
             await _dataContext.SaveChangesAsync();
             return Ok(venta);
+        }
+
+
+        // Calcula y actualiza el total de la venta
+        [HttpPut("/update")]
+        public async Task<ActionResult> UpdateTotal()
+        {
+            Venta venta = await _dataContext.Ventas.OrderBy(v => v.Id).LastAsync();
+            List<DetalleVenta> detalles = await _dataContext.DetalleVentas.Where(d => d.VentaId == venta.Id).ToListAsync();
+
+            float total = 0;
+            detalles.ForEach(d =>
+            {
+                float precio = _dataContext.Productos.FirstOrDefault(p => p.Id == d.ProductoId).Costo;
+                total += d.Cantidad * precio;
+            });
+
+            venta.Total = total;
+            venta.Fecha = DateTime.Now;
+
+            _dataContext.Update(venta);
+            await _dataContext.SaveChangesAsync();
+            return Ok();
         }
     }
 

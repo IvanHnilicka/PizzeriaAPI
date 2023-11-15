@@ -59,14 +59,13 @@ namespace API_Pizzeria.Controllers
 
 
         // Obtiene los datos del usuario por su numero de empleado
-        [Authorize(Roles = "Admin")]
         [HttpGet("{numEmpleado:int}")]
         public async Task<ActionResult> GetUsuarioById(int numEmpleado)
         {
             var usuario = await _userManager.FindByIdAsync(numEmpleado.ToString());
             if(usuario == null)
             {
-                return BadRequest("Numero de empleado no encontrado");
+                return BadRequest("Empleado no encontrado");
             }
 
             // Verificamos si el usuario tiene rol de administrador para asignarlo a la propiedad Admin
@@ -86,6 +85,24 @@ namespace API_Pizzeria.Controllers
             return Ok(datosUsuario);
         }
 
+        [HttpGet("nombreUser")]
+        public async Task<ActionResult> GetNombreLoggedUser()
+        {
+            int numEmpleado = getNumEmpleadoLoggeado();
+            if(numEmpleado == -1)
+            {
+                return BadRequest();
+            }
+
+            var datosEmpleado = GetUsuarioById(numEmpleado);
+            if(datosEmpleado == null)
+            {
+                return BadRequest();
+            }
+
+            return Ok(datosEmpleado.Result);
+        }
+
 
         // Retorna el numero de empleado del usuario loggeado
         [HttpGet("loggedId")]
@@ -94,14 +111,41 @@ namespace API_Pizzeria.Controllers
             var token = HttpContext.Request.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();
             if (!string.IsNullOrEmpty(token))
             {
-                var handler = new JwtSecurityTokenHandler();
-                var jwtToken = handler.ReadJwtToken(token);
-                int numEmpleado = int.Parse(jwtToken.Claims.FirstOrDefault(c => c.Type == "numEmpleado").Value);
+                try
+                {
+                    var handler = new JwtSecurityTokenHandler();
+                    var jwtToken = handler.ReadJwtToken(token);
+                    int numEmpleado = int.Parse(jwtToken.Claims.FirstOrDefault(c => c.Type == "numEmpleado").Value);
+                    return numEmpleado != null ? numEmpleado : -1;
+                
+                }catch(Exception ex)
+                {
+                    return -1;
+                }
 
-                return numEmpleado != null ? numEmpleado : -1;
             }
 
             return -1;
+        }
+
+
+        [HttpGet("isAdmin")]
+        public bool isAdmin()
+        {
+            int numEmpleado = getNumEmpleadoLoggeado();
+            if (numEmpleado == -1)
+            {
+                return false;
+            }
+
+            var usuario = _userManager.Users.FirstOrDefault(u => u.Id == numEmpleado.ToString());
+            if (usuario == null)
+            {
+                return false;
+            }
+
+            var roles = _userManager.GetRolesAsync(usuario).Result;
+            return roles.Contains("Admin");
         }
 
 
@@ -185,9 +229,8 @@ namespace API_Pizzeria.Controllers
                     expiration = jwtToken.ValidTo
                 });
             }
-
             
-            return Problem("Ha ocurrido un error. Contraseña: " + datosLogin.Contraseña);
+            return BadRequest("Credenciales incorrectas");
         }
 
         // Crea el token de login

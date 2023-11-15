@@ -22,12 +22,11 @@ builder.Services.AddSwaggerGen(options =>
     options.SwaggerDoc("v1", new OpenApiInfo { Title = "PizzeriaAPI", Version = "v1" });
     options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
-        In = ParameterLocation.Header,
-        Description = "Enter a valid token",
         Name = "Authorization",
-        Type = SecuritySchemeType.Http,
+        Type = SecuritySchemeType.ApiKey,
+        Scheme= "Bearer",
         BearerFormat = "JWT",
-        Scheme= "Bearer"
+        In = ParameterLocation.Header
     });
     options.AddSecurityRequirement(new OpenApiSecurityRequirement
     {

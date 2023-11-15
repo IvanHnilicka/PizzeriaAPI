@@ -8,9 +8,9 @@ using Microsoft.EntityFrameworkCore;
 
 namespace API_Pizzeria.Controllers
 {
-    [Authorize(Roles = "Admin")]
     [Route("empleados")]
     [ApiController]
+    [Authorize(Roles = "Admin")]
     public class EmpleadoController : Controller
     {
         private readonly DataContext _dataContext;
