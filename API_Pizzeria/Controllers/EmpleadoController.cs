@@ -52,32 +52,17 @@ namespace API_Pizzeria.Controllers
         public async Task<ActionResult> AgregarEmpleado(NuevoEmpleadoDTO nuevoEmpleado)
         {
             Empleado empleado = _mapper.Map<Empleado>(nuevoEmpleado);
-            empleado.NumEmpleado = createNumEmpleado();
-
-            while(await _dataContext.Empleados.AnyAsync(e => e.NumEmpleado == empleado.NumEmpleado))
-            {
-                empleado.NumEmpleado = createNumEmpleado();
-            }
 
             try
             {
                 _dataContext.Add(empleado);
                 await _dataContext.SaveChangesAsync();
-                return Ok("Empleado agregado exitosamente");
+                return Ok();
 
             }catch(Exception ex)
             {
                 return BadRequest("Error. " + ex);
             }
-        }
-
-
-        // Genera el numero de Empleado aleatoriamente
-        private int createNumEmpleado()
-        {
-            Random random = new Random();
-            var Id = random.Next(1000, 9999);
-            return Id;
         }
 
 
@@ -100,7 +85,7 @@ namespace API_Pizzeria.Controllers
             {
                 _dataContext.Update(empleadoActualizado);
                 await _dataContext.SaveChangesAsync();
-                return Ok("Los datos han sido actualizados");
+                return Ok();
             }catch(Exception e)
             {
                 return BadRequest("Error. " + e);
@@ -118,14 +103,13 @@ namespace API_Pizzeria.Controllers
                 return BadRequest("Numero de empleado no encontrado");
             };
 
-            //int IdEmpleado = await _dataContext.Empleados.Where(e => e.NumEmpleado == numEmpleado).Select(e => e.Id).FirstAsync();
             Empleado empleado = await _dataContext.Empleados.FirstAsync(e => e.NumEmpleado == numEmpleado);
 
             try
             {
-                _dataContext.Remove(empleado);
+                _dataContext.Empleados.Remove(empleado);
                 await _dataContext.SaveChangesAsync();
-                return Ok("Empleado eliminado");
+                return Ok();
             }catch(Exception ex)
             {
                 return BadRequest("Error. " + ex);

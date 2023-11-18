@@ -29,7 +29,7 @@ namespace API_Pizzeria.Controllers
 
         // Obtiene lista de usuarios
         [Authorize(Roles = "Admin")]
-        [HttpGet]
+        [HttpGet("users")]
         public async Task<ActionResult> GetUsuarios()
         {
             var usuarios = await _userManager.Users.ToListAsync();
@@ -85,7 +85,7 @@ namespace API_Pizzeria.Controllers
             return Ok(datosUsuario);
         }
 
-        [HttpGet("nombreUser")]
+        [HttpGet("loggedUser")]
         public async Task<ActionResult> GetNombreLoggedUser()
         {
             int numEmpleado = getNumEmpleadoLoggeado();
@@ -188,7 +188,7 @@ namespace API_Pizzeria.Controllers
                 await _userManager.AddToRoleAsync(datosUsuario, "User");
             }
 
-            return Ok("Usuario creado");
+            return Ok(datosUsuario);
         }
 
         // Genera el numero de Empleado aleatoriamente
@@ -263,9 +263,9 @@ namespace API_Pizzeria.Controllers
 
             // Actualiza los datos del usuario con los nuevos datos
             user.UserName = nuevosDatos.Nombre.Replace(' ', '_');
-            user.NormalizedUserName = user.UserName.ToUpper();
+            user.NormalizedUserName = user.UserName.Normalize();
             user.Email = nuevosDatos.Correo;
-            user.NormalizedEmail = user.Email.ToUpper();
+            user.NormalizedEmail = user.Email.Normalize();
             user.PhoneNumber = nuevosDatos.Telefono;
             user.PasswordHash = _userManager.PasswordHasher.HashPassword(user, nuevosDatos.Contraseña);
 
@@ -286,7 +286,7 @@ namespace API_Pizzeria.Controllers
             var res = await _userManager.UpdateAsync(user);
             if(res != null)
             {
-                return Ok("Los datos han sido actualizados");
+                return Ok();
             }
             else
             {
@@ -313,7 +313,7 @@ namespace API_Pizzeria.Controllers
             }
             else
             {
-                return Ok("Usuario " + numEmpleado + " eliminado");
+                return Ok();
             }
         }
     }
