@@ -5,6 +5,7 @@ using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.OpenApi.Any;
 
 namespace API_Pizzeria.Controllers
 {
@@ -43,10 +44,48 @@ namespace API_Pizzeria.Controllers
 
         // Obtiene la lista de ventas por el numero de mes
         [HttpGet("mes/{mes:int}")]
-        public async Task<ActionResult<List<Venta>>> GetVentasMes(int mes)
+        [AllowAnonymous]
+        public async Task<ActionResult<List<VentaProductoDTO>>> GetVentasMes(int mes)
         {
-            var ventas = await _dataContext.Ventas.Where(v => v.Fecha.Month == mes).ToListAsync();
-            return Ok(ventas);
+            // Obtiene los id de las ventas realizadas en el mes
+            var ventas = _dataContext.Ventas.Where(v => v.Fecha.Month == mes).Select(v => v.Id).ToList();
+
+            // Obtiene los detalles de venta de todos los productos
+            var productos = await _dataContext.Productos.Include(p => p.Detalle).ToListAsync();          
+            
+            var ventasProducto = new List<VentaProductoDTO>();
+            productos.ForEach(p =>
+            {
+                VentaProductoDTO venta = new VentaProductoDTO();
+                
+                // Si el producto esta presente en algun detalle de venta se llenan los datos segun corresponda
+                if(p.Detalle.Count > 0)
+                {
+                    p.Detalle.ForEach(d =>
+                    {
+                        venta.Producto = p.Nombre;
+                        venta.Precio = p.Costo;
+
+                        if (ventas.IndexOf(d.VentaId) != -1)
+                        {
+                            venta.CantidadVendida += d.Cantidad;
+                            venta.Ganancias = p.Costo * venta.CantidadVendida;
+                        }
+                    });
+                }
+                // Si no esta presente en ninguna venta se le asigna 0 en cantidad y ganancias
+                else
+                {
+                    venta.Producto = p.Nombre;
+                    venta.Precio = p.Costo;
+                    venta.CantidadVendida = 0;
+                    venta.Ganancias = 0;
+                }
+
+                ventasProducto.Add(venta);
+            });          
+
+            return Ok(ventasProducto);
         }
 
 
