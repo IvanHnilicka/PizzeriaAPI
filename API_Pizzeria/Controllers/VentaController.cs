@@ -44,7 +44,6 @@ namespace API_Pizzeria.Controllers
 
         // Obtiene la lista de ventas por el numero de mes
         [HttpGet("mes/{mes:int}")]
-        [AllowAnonymous]
         public async Task<ActionResult<List<VentaProductoDTO>>> GetVentasMes(int mes)
         {
             // Obtiene los id de las ventas realizadas en el mes

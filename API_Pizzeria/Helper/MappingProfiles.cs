@@ -18,6 +18,7 @@ namespace API_Pizzeria.Mapper
             CreateMap<DetalleVenta, DetallesDTO>();
             CreateMap<Venta, VentaDTO>();
             CreateMap<NuevoDetalleVentaDTO, DetalleVenta>();
+            CreateMap<NuevoProductoDTO, Producto>();
         }
     }
 }
